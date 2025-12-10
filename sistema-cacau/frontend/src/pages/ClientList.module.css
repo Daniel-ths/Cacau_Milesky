@@ -1,0 +1,35 @@
+/* frontend/src/pages/ClientList.module.css */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th, .table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee; /* Cor mais clara */
+}
+
+.table th {
+    background-color: #f9fafb; /* Cinza bem claro */
+    font-weight: 600;
+    color: #374151;
+}
+
+.saldoCredor {
+    background-color: #d1fae5; /* Verde claro */
+    color: #065f46; /* Verde escuro */
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: bold;
+}
+
+.saldoDevedor {
+    background-color: #fee2e2; /* Vermelho claro */
+    color: #991b1b; /* Vermelho escuro */
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: bold;
+}

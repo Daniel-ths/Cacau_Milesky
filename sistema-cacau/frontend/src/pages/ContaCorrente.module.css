@@ -1,0 +1,102 @@
+/* frontend/src/pages/ContaCorrente.module.css */
+
+/* HEADER E INFORMAÇÕES DO CLIENTE */
+.header {
+    background-color: #f3f4f6;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border-left: 5px solid #10b981; /* Verde esmeralda */
+}
+
+.title {
+    font-size: 26px;
+    font-weight: bold;
+    color: #1f2937;
+    margin-bottom: 5px;
+}
+
+/* RESUMO DO SALDO E BOTÃO */
+.summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin-bottom: 25px;
+}
+
+/* ESTILOS DE SALDO */
+.saldoDevedor {
+    color: #ef4444; /* Vermelho */
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.saldoCredor {
+    color: #10b981; /* Verde */
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.transactionButton {
+    padding: 10px 20px;
+    background-color: #3b82f6; /* Azul */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* FILTRO DE DATAS */
+.filterContainer {
+    background-color: #e5e7eb;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.filterContainer input {
+    margin-left: 8px;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* TABELA DE EXTRATO */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border-radius: 8px;
+}
+
+.table th, .table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.table th {
+    background-color: #e5e7eb;
+    font-weight: bold;
+    color: #374151;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+/* Destaque para as linhas de Débito (saída) e Crédito (entrada) */
+.debito {
+    background-color: #fef2f2; /* Vermelho claro */
+}
+
+.credito {
+    background-color: #ecfdf5; /* Verde claro */
+}
