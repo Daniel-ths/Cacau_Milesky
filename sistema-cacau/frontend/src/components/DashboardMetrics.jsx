@@ -1,10 +1,13 @@
-// frontend/src/components/DashboardMetrics.jsx
-
 import React, { useState, useEffect } from 'react';
-import { formatCurrency } from '../utils/formatters'; // Importa a função do formatters.js
+import { formatCurrency } from '../utils/formatters'; // Assumindo que você tem essa função
+import styles from './DashboardMetrics.module.css';
 
 const DashboardMetrics = () => {
-    const [metrics, setMetrics] = useState({ total_devedor: 0, total_credor: 0 });
+    const [metrics, setMetrics] = useState({ 
+        total_credor: 0, 
+        total_devedor: 0, 
+        total_clientes: 0 
+    });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -12,16 +15,24 @@ const DashboardMetrics = () => {
         setLoading(true);
         setError(null);
         try {
-            // ROTA 5 do backend
-            const response = await fetch('http://localhost:3000/dashboard/saldo');
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Falha ao buscar métricas do dashboard.');
-            }
-            const data = await response.json();
-            setMetrics(data);
+            // 1. Busca de Saldo Total (Nova Rota)
+            const metricsResponse = await fetch('http://localhost:3000/metrics/saldo-total');
+            if (!metricsResponse.ok) throw new Error('Falha ao buscar métricas de saldo.');
+            const saldoData = await metricsResponse.json();
+
+            // 2. Busca de Total de Clientes (Reutiliza Rota 1)
+            const clientsResponse = await fetch('http://localhost:3000/clientes');
+            if (!clientsResponse.ok) throw new Error('Falha ao buscar total de clientes.');
+            const clientsData = await clientsResponse.json();
+
+            setMetrics({
+                total_credor: saldoData.total_credor,
+                total_devedor: saldoData.total_devedor,
+                total_clientes: clientsData.length,
+            });
+
         } catch (err) {
+            console.error("Erro ao carregar métricas:", err);
             setError(err.message);
         } finally {
             setLoading(false);
@@ -30,81 +41,38 @@ const DashboardMetrics = () => {
 
     useEffect(() => {
         fetchMetrics();
-        // Opcional: Recarregar a cada 30 segundos, se quiser dados em tempo real
-        // const intervalId = setInterval(fetchMetrics, 30000);
-        // return () => clearInterval(intervalId);
     }, []);
 
-    if (loading) {
-        return (
-            <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ccc', borderRadius: '4px', textAlign: 'center' }}>
-                Carregando métricas...
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid red', borderRadius: '4px', backgroundColor: '#fee2e2' }}>
-                Erro ao carregar métricas: {error}
-            </div>
-        );
-    }
-
-    // Estilos para os cartões
-    const containerStyle = {
-        display: 'flex',
-        gap: '20px',
-        marginBottom: '30px',
-        justifyContent: 'center',
-    };
-
-    const cardStyle = {
-        flex: 1,
-        padding: '20px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-        textAlign: 'center',
-    };
-
-    // Estilos específicos de cor
-    const devedorStyle = { 
-        ...cardStyle, 
-        backgroundColor: '#fef2f2', // Vermelho claro
-        borderLeft: '5px solid #ef4444' // Vermelho
-    };
-
-    const credorStyle = { 
-        ...cardStyle, 
-        backgroundColor: '#ecfdf5', // Verde claro
-        borderLeft: '5px solid #10b981' // Verde
-    };
-
-    const valueStyle = {
-        fontSize: '28px',
-        fontWeight: 'bold',
-        marginTop: '10px',
-    };
+    if (loading) return <p>Carregando métricas...</p>;
+    if (error) return <p style={{ color: 'red' }}>Erro ao carregar métricas: {error}</p>;
 
     return (
-        <div style={containerStyle}>
-            {/* Cartão Saldo Devedor Total */}
-            <div style={devedorStyle}>
-                <h3 style={{ fontSize: '16px', color: '#dc2626' }}>Saldo Devedor Total (Seus Clientes lhe devem)</h3>
-                <p style={{ ...valueStyle, color: '#dc2626' }}>
-                    {formatCurrency(metrics.total_devedor)}
-                </p>
+        <div className={styles.dashboardGrid}>
+            
+            {/* Métrica 1: Total de Clientes */}
+            <div className={styles.metricCard}>
+                <p>Total de Produtores</p>
+                <h3>{metrics.total_clientes}</h3>
             </div>
-
-            {/* Cartão Saldo Credor Total */}
-            <div style={credorStyle}>
-                <h3 style={{ fontSize: '16px', color: '#059669' }}>Saldo Credor Total (Você deve aos seus clientes)</h3>
-                <p style={{ ...valueStyle, color: '#059669' }}>
+            
+            {/* Métrica 2: O que a Fazenda Deve (O total dos créditos dos clientes) */}
+            <div className={styles.metricCard}>
+                <p>Total a Pagar</p>
+                <h3 className={styles.totalCredor}>
                     {formatCurrency(metrics.total_credor)}
-                </p>
+                </h3>
+            </div>
+            
+            {/* Métrica 3: O que os Clientes Devem (O total dos débitos dos clientes) */}
+            <div className={styles.metricCard}>
+                <p>Total a Receber (Clientes Devem)</p>
+                <h3 className={styles.totalDevedor}>
+                    {formatCurrency(metrics.total_devedor)}
+                </h3>
             </div>
         </div>
     );
 };
 
 export default DashboardMetrics;
+

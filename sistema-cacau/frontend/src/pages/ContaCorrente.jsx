@@ -1,226 +1,246 @@
+// frontend/src/pages/ContaCorrente.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'; // Hook para navegação
+import { FileText, FileSpreadsheet } from 'lucide-react'; // Ícones
 import Layout from '../components/Layout';
 import TransactionModal from '../components/TransactionModal';
 import { formatCurrency, formatDate } from '../utils/formatters';
+import { generatePDF, generateCSV } from '../utils/exportUtils'; // Importando a lógica de exportação
 import styles from './ContaCorrente.module.css';
 
 const ContaCorrente = () => {
-    // 1. OBTÉM O ID DA URL via React Router (padrão)
-    const { clienteId } = useParams();
+    // ---------------------------------------------------------
+    // 🚨 SOLUÇÃO DO ERRO EM CASCATA: LEITURA DIRETA DA URL 🚨
+    // ---------------------------------------------------------
+    const navigate = useNavigate(); 
 
-    // 🚨 VERIFICAÇÃO DE SEGURANÇA CONTRA ID INVÁLIDO OU FIXO (ID 1) 🚨
-    // Se o clienteId for '1' ou não existir (o que acontece se for excluído), 
-    // ele exibe uma mensagem de erro e não tenta fazer a requisição.
-    // Você pode remover esta verificação após o problema ser resolvido.
-    if (!clienteId || clienteId === '1') {
-        return (
-            <Layout>
-                <div style={{ padding: '20px', textAlign: 'center' }}>
-                    <h2>Erro de Roteamento ou ID Excluído</h2>
-                    <p>O ID do cliente não foi encontrado na URL ou está fixo como ID 1. Por favor, volte à lista e clique em um cliente que você sabe que existe (ex: ID 13, 14, 15...).</p>
-                </div>
-            </Layout>
-        );
-    }
-    
-    // --- ESTADOS ---
-    const [accountData, setAccountData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [showModal, setShowModal] = useState(false);
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
+    // Pega a URL inteira e extrai o ID
+    const path = window.location.pathname;
+    const urlId = path.split('/').pop();
+    const clienteId = parseInt(urlId);
 
+    // Validação do ID
+    const isIdInvalid = isNaN(clienteId) || clienteId === 1;
+    // ---------------------------------------------------------
 
-    // --- FUNÇÕES DE DADOS ---
-    const fetchAccountData = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            // Incluindo os filtros de data na requisição e usando o clienteId
-            const url = `http://localhost:3000/conta-corrente/${clienteId}?startDate=${startDate}&endDate=${endDate}`;
-            const response = await fetch(url);
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                // AQUI o erro de 'Cliente não encontrado' é retornado se o status for 404
-                throw new Error(errorData.message || 'Falha ao buscar conta corrente.');
-            }
-            const data = await response.json();
-            setAccountData(data);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [accountData, setAccountData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [showModal, setShowModal] = useState(false);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
-    useEffect(() => {
-        // Usa o clienteId capturado da URL
-        fetchAccountData();
-    }, [clienteId, startDate, endDate]); // Re-executa ao mudar ID ou datas
+    const fetchAccountData = async () => {
+        if (isIdInvalid) return;
 
-    // FUNÇÃO PARA EXCLUSÃO DE TRANSAÇÃO (ROTA 8)
-    const handleDeleteTransaction = async (transacaoId, valorTotal, clienteNome) => {
-        const confirmDelete = window.confirm(
-            `Tem certeza que deseja EXCLUIR esta transação de ${formatCurrency(valorTotal)} do cliente ${clienteNome}? \nEsta ação irá reverter o saldo.`
-        );
-        
-        if (!confirmDelete) return;
+        setLoading(true);
+        setError(null);
+        try {
+            console.log("Buscando dados para o ID Real:", clienteId);
+            
+            const url = `http://localhost:3000/conta-corrente/${clienteId}?startDate=${startDate}&endDate=${endDate}`;
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Falha ao buscar conta corrente.');
+            }
+            const data = await response.json();
+            setAccountData(data);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        try {
-            const response = await fetch(`http://localhost:3000/transacoes/${transacaoId}`, {
-                method: 'DELETE',
-            });
-            
-            const data = await response.json();
+    useEffect(() => {
+        if (!isIdInvalid) {
+            fetchAccountData();
+        } else {
+            setLoading(false);
+        }
+    }, [clienteId, startDate, endDate]);
 
-            if (!response.ok) {
-                alert(`Erro ao excluir transação: ${data.message}`); 
-                return;
-            }
+    // Lógica de Exclusão
+    const handleDeleteTransaction = async (transacaoId, valorTotal) => {
+        const confirmDelete = window.confirm(
+            `Tem certeza que deseja EXCLUIR esta transação de ${formatCurrency(valorTotal)}?`
+        );
+        if (!confirmDelete) return;
 
-            alert(data.message); 
-            fetchAccountData(); // Recarrega os dados da conta e o extrato
-            
-        } catch (err) {
-            console.error("Erro na requisição de exclusão:", err);
-            alert("Falha de conexão com o servidor ao excluir a transação.");
-        }
-    };
+        try {
+            const response = await fetch(`http://localhost:3000/transacoes/${transacaoId}`, {
+                method: 'DELETE',
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                alert(`Erro: ${data.message}`); 
+                return;
+            }
+            alert(data.message); 
+            fetchAccountData();
+        } catch (err) {
+            alert("Falha de conexão.");
+        }
+    };
 
-    const handleTransactionSuccess = () => {
-        setShowModal(false);
-        fetchAccountData();
-    };
+    const handleTransactionSuccess = () => {
+        setShowModal(false);
+        fetchAccountData();
+    };
 
-    const formatBalance = (balance) => {
-        const value = parseFloat(balance);
-        const className = value < 0 ? styles.saldoDevedor : styles.saldoCredor;
-        return {
-            display: formatCurrency(Math.abs(value)),
-            className: className,
-            nature: value < 0 ? 'D' : 'C'
-        };
-    };
+    const formatBalance = (balance) => {
+        const value = parseFloat(balance);
+        const className = value < 0 ? styles.saldoDevedor : styles.saldoCredor;
+        return {
+            display: formatCurrency(Math.abs(value)),
+            className: className,
+            nature: value < 0 ? 'D' : 'C'
+        };
+    };
 
-    // --- RENDERIZAÇÃO DE ESTADOS ---
-    if (loading) return <Layout><p>Carregando conta corrente...</p></Layout>;
-    // Se o erro for 'Cliente não encontrado', ele será tratado aqui
-    if (error) return <Layout><p style={{ color: 'red' }}>Erro: {error}</p></Layout>; 
-    if (!accountData || !accountData.cliente) return <Layout><p>Cliente não encontrado.</p></Layout>;
+    // --- RENDERIZAÇÃO ---
 
-    const { cliente, extrato } = accountData;
-    const saldo = formatBalance(cliente.saldo);
+    if (isIdInvalid) {
+        return (
+            <Layout>
+                <div style={{ padding: '30px', textAlign: 'center', color: '#721c24', backgroundColor: '#f8d7da', borderRadius: '8px' }}>
+                    <h2>⚠️ Erro de Identificação</h2>
+                    <p>O sistema tentou acessar o ID <strong>{urlId}</strong>, que é inválido.</p>
+                    <button onClick={() => navigate('/')} style={{ marginTop: '10px', padding: '10px', cursor: 'pointer' }}>
+                        Voltar para a Lista
+                    </button>
+                </div>
+            </Layout>
+        );
+    }
 
-    // --- RENDERIZAÇÃO PRINCIPAL ---
-    return (
-        <Layout>
-            <div className={styles.header}>
-                <h2 className={styles.title}>Conta Corrente: {cliente.nome}</h2>
-                <div className={styles.info}>
-                    <p>CPF: {cliente.cpf}</p>
-                    <p>Telefone: {cliente.telefone}</p>
-                </div>
-            </div>
+    if (loading) return <Layout><p>Carregando dados...</p></Layout>;
+    if (error) return <Layout><p style={{ color: 'red' }}>Erro do Servidor: {error}</p></Layout>;
+    if (!accountData || !accountData.cliente) return <Layout><p>Cliente não encontrado.</p></Layout>;
 
-            <div className={styles.summary}>
-                <div className={styles.balanceCard}>
-                    <p>Saldo Atual</p>
-                    <h3 className={saldo.className}>
-                        {saldo.display} ({saldo.nature})
-                    </h3>
-                </div>
-                <button 
-                    onClick={() => setShowModal(true)} 
-                    className={styles.transactionButton}
-                >
-                    + Novo Lançamento
-                </button>
-            </div>
-            
-            {/* Filtro de Extrato */}
-            <div className={styles.filterContainer}>
-                <h3>Filtro de Extrato</h3>
-                <label>
-                    Início: 
-                    <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-                </label>
-                <label>
-                    Fim: 
-                    <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-                </label>
-                <button onClick={() => { setStartDate(''); setEndDate(''); }} className={styles.clearFilterButton}>
-                    Limpar Filtros
-                </button>
-            </div>
+    const { cliente, extrato } = accountData;
+    const saldo = formatBalance(cliente.saldo);
 
-            <h3>Extrato de Transações ({extrato.length} lançamentos)</h3>
-            
-            <div className={styles.tableWrapper}>
-                <table className={styles.table}>
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Tipo</th>
-                            <th style={{ textAlign: 'right' }}>Peso (kg)</th>
-                            <th style={{ textAlign: 'right' }}>Preço/kg</th>
-                            <th style={{ textAlign: 'right' }}>Valor Total</th>
-                            <th>Observação</th>
-                            <th>Ações</th> {/* Botão Excluir */}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {extrato.map((transacao) => {
-                            const isCredito = parseFloat(transacao.valor_total) > 0;
-                            const valorDisplay = formatCurrency(Math.abs(parseFloat(transacao.valor_total)));
-                            const rowClass = isCredito ? styles.credito : styles.debito;
-                            
-                            return (
-                                <tr key={transacao.id} className={rowClass}>
-                                    <td>{formatDate(transacao.data_transacao)}</td>
-                                    <td>{transacao.tipo}</td>
-                                    <td style={{ textAlign: 'right' }}>{transacao.peso_kg ? transacao.peso_kg.toFixed(2) : '-'}</td>
-                                    <td style={{ textAlign: 'right' }}>{transacao.preco_por_kg ? formatCurrency(transacao.preco_por_kg) : '-'}</td>
-                                    <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                                        {isCredito ? '+' : '-'} {valorDisplay}
-                                    </td>
-                                    <td>{transacao.observacao || '-'}</td>
-                                    <td>
-                                        {/* BOTÃO DE EXCLUSÃO DE TRANSAÇÃO */}
-                                        <button 
-                                            onClick={() => handleDeleteTransaction(transacao.id, transacao.valor_total, cliente.nome)}
-                                            style={{ padding: '5px 10px', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
-                                        >
-                                            Excluir
-                                        </button>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                        {extrato.length === 0 && (
-                            <tr>
-                                <td colSpan="7" style={{ textAlign: 'center', color: '#999' }}>
-                                    Nenhuma transação encontrada para este período.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+    return (
+        <Layout>
+            {/* CABEÇALHO SUPERIOR COM NAVEGAÇÃO */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <button 
+                    onClick={() => navigate(-1)} 
+                    style={{ padding: '8px 12px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                >
+                    &larr; Voltar
+                </button>
+                
+                <h2 className={styles.title} style={{margin: 0}}>Conta: {cliente.nome}</h2>
+                
+                <button onClick={() => setShowModal(true)} className={styles.transactionButton}>
+                    + Novo Lançamento
+                </button>
+            </div>
+            
+            {/* DADOS DO CLIENTE */}
+            <div className={styles.header}>
+                 <div className={styles.info}>
+                    <p><strong>CPF:</strong> {cliente.cpf}</p>
+                    <p><strong>Telefone:</strong> {cliente.telefone}</p>
+                    <p><strong>Endereço:</strong> {cliente.endereco || 'Não informado'}</p>
+                 </div>
+            </div>
 
-            {/* Modal de Transação */}
-            {showModal && (
-                <TransactionModal
-                    onClose={() => setShowModal(false)}
-                    onSuccess={handleTransactionSuccess}
-                    clienteId={cliente.id}
-                    clienteNome={cliente.nome}
-                />
-            )}
-        </Layout>
-    );
+            {/* CARTÃO DE SALDO */}
+            <div className={styles.summary}>
+                <div className={styles.balanceCard}>
+                    <p>Saldo Atual</p>
+                    <h3 className={saldo.className}>
+                        {saldo.display} ({saldo.nature})
+                    </h3>
+                </div>
+            </div>
+            
+            {/* FILTROS */}
+            <div className={styles.filterContainer}>
+                <h3>Filtro de Extrato</h3>
+                <label>Início: <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></label>
+                <label>Fim: <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></label>
+                <button onClick={() => { setStartDate(''); setEndDate(''); }} className={styles.clearFilterButton}>Limpar</button>
+            </div>
+
+            {/* --- ÁREA DE EXPORTAÇÃO E TÍTULO DA TABELA --- */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '30px', marginBottom: '10px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+                <h3 style={{ margin: 0 }}>Extrato ({extrato.length})</h3>
+                
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    {/* Botão CSV */}
+                    <button
+                        onClick={() => generateCSV(cliente, extrato)}
+                        title="Baixar Planilha Excel/CSV"
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', backgroundColor: '#107c41', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500', fontSize: '14px' }}
+                    >
+                        <FileSpreadsheet size={18} /> CSV
+                    </button>
+
+                    {/* Botão PDF */}
+                    <button
+                        onClick={() => generatePDF(cliente, extrato)}
+                        title="Baixar Relatório Oficial em PDF"
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', backgroundColor: '#b30b00', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500', fontSize: '14px' }}
+                    >
+                        <FileText size={18} /> PDF
+                    </button>
+                </div>
+            </div>
+
+            {/* TABELA */}
+            <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Tipo</th>
+                            <th style={{textAlign: 'right'}}>Peso (kg)</th>
+                            <th style={{textAlign: 'right'}}>R$/kg</th>
+                            <th style={{textAlign: 'right'}}>Total</th>
+                            <th>Obs</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {extrato.map((transacao) => {
+                            const isCredito = parseFloat(transacao.valor_total) > 0;
+                            const rowClass = isCredito ? styles.credito : styles.debito;
+                            return (
+                                <tr key={transacao.id} className={rowClass}>
+                                    <td>{formatDate(transacao.data_transacao)}</td>
+                                    <td>{transacao.tipo}</td>
+                                    <td style={{textAlign: 'right'}}>{transacao.peso_kg || '-'}</td>
+                                    <td style={{textAlign: 'right'}}>{transacao.preco_por_kg ? formatCurrency(transacao.preco_por_kg) : '-'}</td>
+                                    <td style={{textAlign: 'right', fontWeight: 'bold'}}>{isCredito ? '+' : '-'} {formatCurrency(Math.abs(transacao.valor_total))}</td>
+                                    <td>{transacao.observacao || '-'}</td>
+                                    <td>
+                                        <button onClick={() => handleDeleteTransaction(transacao.id, transacao.valor_total)} style={{color: '#dc3545', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px'}}>
+                                            Excluir
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+
+            {showModal && (
+                <TransactionModal
+                    onClose={() => setShowModal(false)}
+                    onSuccess={handleTransactionSuccess}
+                    clienteId={cliente.id}
+                    clienteNome={cliente.nome}
+                />
+            )}
+        </Layout>
+    );
 };
 
 export default ContaCorrente;
