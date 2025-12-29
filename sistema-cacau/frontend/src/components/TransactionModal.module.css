@@ -1,102 +1,220 @@
-/* BACKGROUND ESCURO QUE COBRE A TELA */
-.modalOverlay {
+.overlay {
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    width: 100%;
+    height: 100%;
+    background-color: rgba(15, 23, 42, 0.6); /* Fundo escuro azulado */
+    backdrop-filter: blur(4px); /* Efeito de vidro */
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
 }
 
-/* CONTEÚDO PRINCIPAL DO MODAL */
-.modalContent {
-    background-color: white;
-    padding: 25px;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+.modal {
+    background: #fff;
     width: 90%;
-    max-width: 500px; /* Limita o tamanho do modal */
-    position: relative;
+    max-width: 600px;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    animation: slideUp 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
 }
 
-/* CABEÇALHO E BOTÃO FECHAR */
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
 .header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 15px;
-    margin-bottom: 20px;
+    background-color: #f8fafc;
+}
+
+.header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    color: #1e293b;
+    font-weight: 600;
 }
 
 .closeButton {
     background: none;
     border: none;
-    font-size: 24px;
     cursor: pointer;
-    color: #999;
-}
-
-/* FORMULÁRIO */
-.form label {
-    display: block;
-    margin-top: 10px;
-    margin-bottom: 5px;
-    font-weight: bold;
-    color: #333;
-}
-
-.input, .select, .textarea {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
+    color: #64748b;
+    padding: 4px;
     border-radius: 4px;
-    box-sizing: border-box; /* Garante que padding e border não aumentem a largura */
+    transition: all 0.2s;
 }
 
-.textarea {
-    resize: vertical;
+.closeButton:hover {
+    background-color: #e2e8f0;
+    color: #ef4444;
 }
 
-.info {
-    font-size: 12px;
-    color: #666;
-    margin-top: -5px;
-    margin-bottom: 15px;
+/* --- SELETOR DE TIPO (GRID DE CARTÕES) --- */
+.typeGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 20px 24px;
+    background-color: #fff;
 }
 
-.submitButton {
-    width: 100%;
+.typeCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     padding: 12px;
-    background-color: #10b981; /* Verde esmeralda */
-    color: white;
-    border: none;
-    border-radius: 4px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
     cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.2s;
-    margin-top: 20px;
-}
-
-.submitButton:hover:not(:disabled) {
-    background-color: #059669;
-}
-
-.submitButton:disabled {
-    background-color: #999;
-    cursor: not-allowed;
-}
-
-.error {
-    color: #ef4444; /* Vermelho */
-    background-color: #fee2e2;
-    padding: 10px;
-    border-radius: 4px;
-    margin-top: 10px;
+    transition: all 0.2s;
+    background: #fff;
+    color: #64748b;
     text-align: center;
+}
+
+.typeCard:hover {
+    border-color: #cbd5e1;
+    background-color: #f8fafc;
+}
+
+.typeCard.active {
+    background-color: #eff6ff;
+    border-color: currentColor; /* Usa a cor definida inline */
+    color: currentColor;
+    font-weight: 600;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.typeIcon {
+    margin-bottom: 8px;
+}
+
+.typeLabel {
+    font-size: 0.85rem;
+}
+
+/* --- FORMULÁRIO --- */
+.formBody {
+    padding: 0 24px 20px 24px;
+}
+
+.row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.formGroup {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.formGroup label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #475569;
+}
+
+.inputWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.inputWrapper input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.inputWrapper input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.suffix {
+    position: absolute;
+    right: 12px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+
+/* --- ÁREA DE TOTAL (HIGHLIGHT) --- */
+.totalHighlight {
+    background-color: #f1f5f9;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    margin-top: 10px;
+    border: 1px dashed #cbd5e1;
+}
+
+.totalHighlight small {
+    display: block;
+    color: #64748b;
+    margin-bottom: 4px;
+    font-size: 0.8rem;
+}
+
+.totalValue {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* --- RODAPÉ --- */
+.footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.cancelBtn {
+    padding: 10px 20px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #475569;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.saveBtn {
+    padding: 10px 24px;
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.saveBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
 }

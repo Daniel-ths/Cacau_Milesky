@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { formatCurrency } from '../utils/formatters'; // Assumindo que você tem essa função
+import { formatCurrency } from '../utils/formatters';
 import styles from './DashboardMetrics.module.css';
+import { api } from '../api'; // <--- IMPORTAMOS A API AQUI
 
 const DashboardMetrics = () => {
     const [metrics, setMetrics] = useState({ 
@@ -15,13 +16,15 @@ const DashboardMetrics = () => {
         setLoading(true);
         setError(null);
         try {
-            // 1. Busca de Saldo Total (Nova Rota)
-            const metricsResponse = await fetch('http://localhost:3000/metrics/saldo-total');
+            // USANDO API.GET (Substitui os fetch manuais)
+            
+            // 1. Busca de Saldo Total
+            const metricsResponse = await api.get('/metrics/saldo-total');
             if (!metricsResponse.ok) throw new Error('Falha ao buscar métricas de saldo.');
             const saldoData = await metricsResponse.json();
 
-            // 2. Busca de Total de Clientes (Reutiliza Rota 1)
-            const clientsResponse = await fetch('http://localhost:3000/clientes');
+            // 2. Busca de Total de Clientes
+            const clientsResponse = await api.get('/clientes');
             if (!clientsResponse.ok) throw new Error('Falha ao buscar total de clientes.');
             const clientsData = await clientsResponse.json();
 
@@ -49,13 +52,11 @@ const DashboardMetrics = () => {
     return (
         <div className={styles.dashboardGrid}>
             
-            {/* Métrica 1: Total de Clientes */}
             <div className={styles.metricCard}>
                 <p>Total de Produtores</p>
                 <h3>{metrics.total_clientes}</h3>
             </div>
             
-            {/* Métrica 2: O que a Fazenda Deve (O total dos créditos dos clientes) */}
             <div className={styles.metricCard}>
                 <p>Total a Pagar</p>
                 <h3 className={styles.totalCredor}>
@@ -63,7 +64,6 @@ const DashboardMetrics = () => {
                 </h3>
             </div>
             
-            {/* Métrica 3: O que os Clientes Devem (O total dos débitos dos clientes) */}
             <div className={styles.metricCard}>
                 <p>Total a Receber (Clientes Devem)</p>
                 <h3 className={styles.totalDevedor}>
@@ -75,4 +75,3 @@ const DashboardMetrics = () => {
 };
 
 export default DashboardMetrics;
-

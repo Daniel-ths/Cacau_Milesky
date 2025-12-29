@@ -1,0 +1,87 @@
+.container {
+    margin-bottom: 25px;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid transparent;
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.iconArea {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.infoArea {
+    display: flex;
+    flex-direction: column;
+}
+
+.infoArea span {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.infoArea h3 {
+    margin: 5px 0 2px 0;
+    font-size: 1.4rem;
+    color: #212529;
+    font-weight: 700;
+}
+
+.infoArea small {
+    font-size: 0.75rem;
+    color: #adb5bd;
+}
+
+/* --- CORES ESPECÍFICAS --- */
+
+/* Estoque (Laranja/Marrom Cacau) */
+.cardEstoque { border-bottom: 3px solid #d35400; }
+.cardEstoque .iconArea { background: linear-gradient(135deg, #e67e22, #d35400); }
+.cardEstoque h3 { color: #d35400; }
+
+/* A Pagar (Vermelho - Alerta) */
+.cardPagar { border-bottom: 3px solid #dc3545; }
+.cardPagar .iconArea { background: linear-gradient(135deg, #ff6b6b, #c0392b); }
+.cardPagar h3 { color: #dc3545; }
+
+/* A Receber (Verde - Dinheiro entrando) */
+.cardReceber { border-bottom: 3px solid #198754; }
+.cardReceber .iconArea { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+.cardReceber h3 { color: #198754; }
+
+/* Total Clientes (Azul/Cinza Neutro) */
+.cardTotal { border-bottom: 3px solid #6c757d; }
+.cardTotal .iconArea { background: #e9ecef; }
+.cardTotal .iconArea svg { stroke: #495057; }
